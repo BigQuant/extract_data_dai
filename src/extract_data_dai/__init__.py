@@ -1,7 +1,9 @@
 """数据抽取"""
+
 import json
 import os
 from datetime import datetime, timedelta
+
 import structlog
 
 from bigmodule import I  # noqa: N812
@@ -10,11 +12,11 @@ from bigmodule import I  # noqa: N812
 # 模块作者
 author = "BigQuant"
 # 模块分类
-category = "特征抽取"
+category = "数据"
 # 模块显示名
 friendly_name = "数据抽取(DAI)"
 # 文档地址, optional
-doc_url = "https://bigquant.com/wiki/doc/aistudio-aiide-NzAjgKapzW#h-数据抽取"
+doc_url = "https://bigquant.com/wiki/doc/aistudio-HVwrgP4J1A#h-数据抽取dai5"
 # 是否自动缓存结果
 cacheable = True
 
@@ -27,13 +29,15 @@ def run(
     start_date_bound_to_trading_date: I.bool("开始日期绑定交易日，在模拟和实盘交易模式下，开始日期替换为交易日") = False,
     end_date: I.str("结束日期/end_date，示例 2023-01-01") = "2020-12-31",
     end_date_bound_to_trading_date: I.bool("结束日期绑定交易日，在模拟和实盘交易模式下，结束日期替换为交易日") = False,
-    before_start_days: I.int("历史数据向前取的天数，世纪开始日期会减去此天数，用于计算需要向前历史数据的因子，比如 m_lag(close, 10)，需要向前去10天数据") = 90,
+    before_start_days: I.int("历史数据向前取的天数，实际开始日期会减去此天数，用于计算需要向前历史数据的因子，比如 m_lag(close, 10)，需要向前去10天数据") = 90,
     debug: I.bool("调试模式，显示调试日志") = False,
 ) -> [I.port("数据", "data")]:
     """DAI 数据抽取模块。根据给定的DAI SQL，抽取数据。"""
     import dai
 
-    sql = sql.read_text()
+    sql = sql.read()
+    if isinstance(sql, dict):
+        sql = sql["sql"]
 
     trading_date = os.environ.get("TRADING_DATE")
     if trading_date:
@@ -52,17 +56,24 @@ def run(
     else:
         query_start_date = start_date
 
-    logger.info(f'{start_date=}, {end_date=}, {query_start_date=} (支持加速 [url="command:switch-quota"]升级资源[/url]) ..')
+    try:
+        if int(os.getenv("CPU_LIMIT", 1)) < 4:
+            # DAI 支持并行计算，更多计算资源，更省时间
+            logger.warning(f'{start_date=}, {end_date=}, {query_start_date=} (支持加速 [url="command:switch-quota"]升级资源[/url]) ..')
+    except:
+        pass
     data = dai.query(sql, filters={"date": [query_start_date, end_date]}).df()
     if "date" in data.columns:
         data = data[(data["date"] >= start_date) & (data["date"] <= end_date)]
     logger.info(f"data extracted: {data.shape}")
+    if len(data) == 0:
+        logger.warning("data extracted: 0 rows")
     if debug:
         logger.debug(f"data head: {data.head()}")
         logger.debug(f"data tail: {data.tail()}")
 
     outputs = I.Outputs(
-        data=dai.DataSource.write_bdb(data, extra=json.dumps({"start_date": start_date, "end_date": end_date})),
+        data=dai.DataSource.write_bdb(data, extra=json.dumps({"start_date": start_date, "end_date": end_date, "before_start_days": before_start_days})),
     )
     return outputs
 

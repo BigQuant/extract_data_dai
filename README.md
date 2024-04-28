@@ -2,7 +2,8 @@
 
 ## 模块介绍
 
-抽取 DAI 数据
+- 抽取 DAI 数据
+- [文档](https://bigquant.com/wiki/doc/aistudio-HVwrgP4J1A#h-数据抽取dai5)
 
 ## 模块开发
 
@@ -19,9 +20,7 @@ cd "本地 git 项目目录"
 
 ### 安装模块到开发路径，在开发里默认安装为 v0 版本
 
-```bash
 bq module install --dev
-```
 
 ### 测试模块
 
