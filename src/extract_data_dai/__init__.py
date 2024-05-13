@@ -4,6 +4,7 @@ import json
 import os
 from datetime import datetime, timedelta
 
+from jinja2 import Template
 import structlog
 
 from bigmodule import I  # noqa: N812
@@ -46,7 +47,18 @@ def run(
         if end_date_bound_to_trading_date:
             end_date = trading_date
 
-    sql = sql.format(start_date=start_date, end_date=end_date)
+    # TODO: remove this in future
+    # 对于旧版升级上来的, 给出 warning 提示
+    if "{" in sql and "{{" not in sql:
+        import re
+
+        # 定义一个用于检测 {start_date} 和 {end_date}（包括其中可能的空格）的正则表达式
+        pattern = r"\{\s*start_date\s*\}|\{\s*end_date\s*\}"
+        # 使用正则表达式搜索字符串
+        if re.search(pattern, sql):
+            logger.warning("检测到旧版的 { start_date } { end_date }, 在新版请使用 {{ start_date }} {{ end_date }}")
+
+    sql = Template(sql).render(start_date=start_date, end_date=end_date)
     if debug:
         logger.debug(sql)
 
