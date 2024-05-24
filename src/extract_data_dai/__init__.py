@@ -2,7 +2,8 @@
 
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
+import pandas as pd
 
 from jinja2 import Template
 import structlog
@@ -62,9 +63,8 @@ def run(
     if debug:
         logger.debug(sql)
 
-    date_format = "%Y-%m-%d"
     if before_start_days >= 0:
-        query_start_date = (datetime.strptime(start_date, date_format) - timedelta(days=before_start_days)).strftime(date_format)
+        query_start_date = (pd.to_datetime(start_date) - timedelta(days=before_start_days)).strftime("%Y-%m-%d %H:%M:%S")
     else:
         query_start_date = start_date
 
