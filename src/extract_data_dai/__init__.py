@@ -4,10 +4,9 @@ import json
 import os
 from datetime import datetime, timedelta
 
-from jinja2 import Template
 import structlog
-
 from bigmodule import I  # noqa: N812
+from jinja2 import Template
 
 # metadata
 # 模块作者
@@ -62,7 +61,18 @@ def run(
     if debug:
         logger.debug(sql)
 
-    date_format = "%Y-%m-%d"
+    # 自动解析日期时间的两种格式
+    def parse_date_fmt(date):
+        formats = ["%Y-%m-%d", "%Y-%m-%d %H:%M:%S"]
+        for fmt in formats:
+            try:
+                datetime.strptime(date, fmt)
+                return fmt
+            except ValueError:
+                continue
+        raise ValueError(f'时间格式不正确: {date}, 应为 "YYYY-MM-DD" 或 "YYYY-MM-DD HH:MM:SS"')
+
+    date_format = parse_date_fmt(start_date)
     if before_start_days >= 0:
         query_start_date = (datetime.strptime(start_date, date_format) - timedelta(days=before_start_days)).strftime(date_format)
     else:
