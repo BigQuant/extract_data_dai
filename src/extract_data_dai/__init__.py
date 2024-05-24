@@ -4,9 +4,10 @@ import json
 import os
 from datetime import datetime, timedelta
 
-import structlog
-from bigmodule import I  # noqa: N812
 from jinja2 import Template
+import structlog
+
+from bigmodule import I  # noqa: N812
 
 # metadata
 # 模块作者
