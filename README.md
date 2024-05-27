@@ -7,7 +7,7 @@
 
 ## 模块开发
 
-[BigQuant AIStudio 可视化模块开发文档](https://bigquant.com/wiki/doc/aistudio-gswPyjKddr)
+[BigQuant AIStudio 可视化模块开发文档](https://bigquant.com/wiki/doc/aistudio-okn4EnwWe1)
 
 进入 [BigQuant AIStudio](https://bigquant.com/aistudio) 命令行终端开发模块
 
