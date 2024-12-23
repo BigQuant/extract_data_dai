@@ -76,7 +76,7 @@ def run(
     except:
         pass
     data = dai.query(sql, filters={"date": [query_start_date, end_date]}).df()
-    if keep_before :
+    if keep_before:
         start_date = query_start_date
     if "date" in data.columns:
         data = data[(data["date"] >= start_date) & (data["date"] <= end_date)]
