@@ -1,4 +1,4 @@
-"""数据抽取"""
+"""Data Extraction"""
 
 import json
 import os
@@ -11,31 +11,31 @@ import structlog
 from bigmodule import I  # noqa: N812
 
 # metadata
-# 模块作者
-author = "BigQuant"
-# 模块分类
-category = "数据"
-# 模块显示名
-friendly_name = "数据抽取(DAI)"
-# 文档地址, optional
-doc_url = "https://bigquant.com/wiki/doc/aistudio-HVwrgP4J1A#h-数据抽取dai5"
-# 是否自动缓存结果
+# Module author
+author = "AFE"
+# Module category
+category = "Data"
+# Module display name
+friendly_name = "Data Extraction (DAI)"
+# Documentation URL, optional
+doc_url = "wiki/doc/aistudio-HVwrgP4J1A#h-数据抽取dai5"
+# Whether to automatically cache results
 cacheable = True
 
 logger = structlog.get_logger()
 
 
 def run(
-    sql: I.port("数据SQL，需要抽取的数据", specific_type_name="DataSource"),
-    start_date: I.str("开始日期/start_date，用于替换sql中的开始日期，如果有的话。示例 2023-01-01") = "2020-01-01",
-    start_date_bound_to_trading_date: I.bool("开始日期绑定交易日，在模拟和实盘交易模式下，开始日期替换为交易日") = False,
-    end_date: I.str("结束日期/end_date，示例 2023-01-01") = "2020-12-31",
-    end_date_bound_to_trading_date: I.bool("结束日期绑定交易日，在模拟和实盘交易模式下，结束日期替换为交易日") = False,
-    before_start_days: I.int("历史数据向前取的天数，实际开始日期会减去此天数，用于计算需要向前历史数据的因子，比如 m_lag(close, 10)，需要向前去10天数据") = 90,
-    keep_before: I.bool("保留向前所取天数的数据(使用时请注意在前置'输入特征'模块中不要勾选[表达式--移除空值])") = False,
-    debug: I.bool("调试模式，显示调试日志") = False,
-) -> [I.port("数据", "data")]:
-    """DAI 数据抽取模块。根据给定的DAI SQL，抽取数据。"""
+    sql: I.port("Data SQL, the data to be extracted", specific_type_name="DataSource"),
+    start_date: I.str("Start date/start_date, used to replace the start date in the SQL if applicable. Example: 2023-01-01") = "2020-01-01",
+    start_date_bound_to_trading_date: I.bool("Bind start date to trading date, in simulation and live trading modes, the start date is replaced by the trading date") = False,
+    end_date: I.str("End date/end_date, example: 2023-01-01") = "2020-12-31",
+    end_date_bound_to_trading_date: I.bool("Bind end date to trading date, in simulation and live trading modes, the end date is replaced by the trading date") = False,
+    before_start_days: I.int("Number of days to look back for historical data, the actual start date will be reduced by this number of days, used for calculating factors that require historical data, e.g., m_lag(close, 10), which requires looking back 10 days") = 90,
+    keep_before: I.bool("Keep the data from the look-back period (note: ensure 'Remove Nulls' is unchecked in the preceding 'Input Features' module)") = False,
+    debug: I.bool("Debug mode, show debug logs") = False,
+) -> [I.port("Data", "data")]:
+    """DAI Data Extraction Module. Extracts data based on the provided DAI SQL."""
     import dai
 
     sql = sql.read()
@@ -50,15 +50,15 @@ def run(
             end_date = trading_date
 
     # TODO: remove this in future
-    # 对于旧版升级上来的, 给出 warning 提示
+    # For old versions upgraded, provide a warning prompt
     if "{" in sql and "{{" not in sql:
         import re
 
-        # 定义一个用于检测 {start_date} 和 {end_date}（包括其中可能的空格）的正则表达式
+        # Define a regex pattern to detect {start_date} and {end_date} (including possible spaces)
         pattern = r"\{\s*start_date\s*\}|\{\s*end_date\s*\}"
-        # 使用正则表达式搜索字符串
+        # Search the string using the regex pattern
         if re.search(pattern, sql):
-            logger.warning("检测到旧版的 { start_date } { end_date }, 在新版请使用 {{ start_date }} {{ end_date }}")
+            logger.warning("Detected old-style { start_date } { end_date }, please use {{ start_date }} {{ end_date }} in the new version")
 
     sql = Template(sql).render(start_date=start_date, end_date=end_date)
     if debug:
@@ -71,8 +71,8 @@ def run(
 
     try:
         if int(os.getenv("CPU_LIMIT", 1)) < 4:
-            # DAI 支持并行计算，更多计算资源，更省时间
-            logger.warning(f'{start_date=}, {end_date=}, {query_start_date=} (支持加速 [url="command:switch-quota"]升级资源[/url]) ..')
+            # DAI supports parallel computing; more resources save time
+            logger.warning(f'{start_date=}, {end_date=}, {query_start_date=} (support acceleration [url="command:switch-quota"]upgrade resources[/url]) ..')
     except:
         pass
     data = dai.query(sql, filters={"date": [query_start_date, end_date]}).df()
@@ -94,15 +94,15 @@ def run(
 
 
 def post_run(outputs):
-    """后置运行函数"""
+    """Post-run function"""
     return outputs
 
 
 def cache_key(kwargs):
-    """缓存 key"""
+    """Cache key"""
     if os.environ.get("TRADING_DATE"):
         if kwargs.get("start_date_bound_to_trading_date") or kwargs.get("end_date_bound_to_trading_date"):
-            # 如果能获取到交易日则证明在进行模拟交易或实盘交易，返回None禁用缓存
+            # If trading date can be obtained, it means paper/live trading is in progress; disable cache
             logger.warning("cache disabled for paper/live trading for bound date")
             return None
         if kwargs.get("end_date", None) == os.environ.get("TRADING_DATE", None):
