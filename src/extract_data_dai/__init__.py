@@ -32,7 +32,7 @@ def run(
     end_date: I.str("结束日期/end_date，示例 2023-01-01") = "2020-12-31",
     end_date_bound_to_trading_date: I.bool("结束日期绑定交易日，在模拟和实盘交易模式下，结束日期替换为交易日") = False,
     before_start_days: I.int("历史数据向前取的天数，实际开始日期会减去此天数，用于计算需要向前历史数据的因子，比如 m_lag(close, 10)，需要向前去10天数据") = 90,
-    keep_before: I.bool("保留向前所取天数的数据(使用时请注意在前置'输入特征'模块中不要勾选[表达式--移除空值])") = False,
+    keep_before: I.bool("保留向前所取天数的数据，若前置模块为'输入特征'模块，则不要勾选[表达式--移除空值]") = False,
     debug: I.bool("调试模式，显示调试日志") = False,
 ) -> [I.port("数据", "data")]:
     """DAI 数据抽取模块。根据给定的DAI SQL，抽取数据。"""
